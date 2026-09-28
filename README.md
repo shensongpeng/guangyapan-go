@@ -1,4 +1,8 @@
-# 光鸭云盘 Go SDK
+# 光鸭云盘 Go SDK：OpenAPI + WebAPI
+
+本 SDK 包含两套独立协议：根包 `guangyapan` 实现官方 **OpenAPI**；子包 [`webapi`](webapi/README.md) 参考 AList 实现消费端 **WebAPI**，具有独立域名、认证和请求类型。WebAPI Token 不能用作开放平台 OAuth Token；两者不能只通过换域名互相替代。
+
+以下章节介绍 OpenAPI；WebAPI 的初始化、短信登录、文件及离线任务用法见 [WebAPI 文档](webapi/README.md)。
 
 依据 [光鸭盘开放平台文档 v1.3](https://app.guangyapan.com/pan/docs/open-api)（2026-09-20）实现，要求 Go 1.22+，仅使用标准库。
 
@@ -186,6 +190,8 @@ go build ./...
 
 测试使用内存 HTTP Transport 和 `httptest.ResponseRecorder`，不依赖本地监听端口、外网或账号。覆盖全部业务路由、请求头/请求体、64 位文件字段、签名、PKCE 标准向量、回调 state 校验、设备码轮询、Token 刷新、上传与移动轮询、错误响应、并发 Token 更新和重定向拦截。
 
-未提供真实应用凭据，因此没有执行生产环境联调；所有服务端能力及未明确的数组编码仍以平台实际响应为准。
+已进行真实只读请求验证：当前本地配置在 OpenAPI 返回 120（client_id not registered）；WebAPI 返回 401（账号错误码 16）。尚未通过有效凭据验证业务成功路径；OpenAPI 多值数组编码仍需平台联调确认。
 
-本次验证环境：Go 1.26.1 / macOS arm64。`go test -race`、`go vet`、`go build` 均通过；SDK 包语句覆盖率 93.9%（包含未执行的联网命令行示例后，全模块为 91.3%）。声明兼容 Go 1.22+，未在 Go 1.22 工具链上另行验证。
+初版 OpenAPI 验证环境：Go 1.26.1 / macOS arm64。`go test -race`、`go vet`、`go build` 均通过；SDK 包语句覆盖率 93.9%（包含未执行的联网命令行示例后，全模块为 91.3%）。声明兼容 Go 1.22+，未在 Go 1.22 工具链上另行验证。
+
+新增 WebAPI 包在相同环境通过 `go test -race`、`go vet`、`go build`，语句覆盖率 87.0%；原 OpenAPI 包覆盖率保持 93.9%。
