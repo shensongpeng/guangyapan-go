@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/shensongpeng/guangyapan-go"
+	"github.com/shensongpeng/guangyapan-go/openapi"
 )
 
 func main() {
-	client, err := guangyapan.NewClient(guangyapan.Config{
+	client, err := openapi.NewClient(openapi.Config{
 		ClientID:    os.Getenv("GUANGYAPAN_CLIENT_ID"),
 		AccessToken: os.Getenv("GUANGYAPAN_ACCESS_TOKEN"),
 	})
@@ -21,7 +21,7 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	result, err := client.GetFileList(ctx, guangyapan.FileListRequest{PageSize: 20})
+	result, err := client.GetFileList(ctx, openapi.FileListRequest{PageSize: 20})
 	if err != nil {
 		log.Fatal(err)
 	}

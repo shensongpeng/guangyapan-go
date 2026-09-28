@@ -1,10 +1,10 @@
 # WebAPI 客户端
 
-此包封装光鸭消费端 WebAPI，独立于模块根目录的官方 OpenAPI 客户端。协议依据 [AList 光鸭驱动](https://github.com/AlistGo/alist/tree/fb0731a6953012e7b72b89bf5473817caa4625f9/drivers/guangyapan)（固定参考提交 `fb0731a6953012e7b72b89bf5473817caa4625f9`）。本包使用标准库独立实现请求、类型、校验及测试，不依赖 AList 或其内部框架。
+此包封装光鸭消费端 WebAPI，独立于`openapi` 子包的官方 OpenAPI 客户端。协议依据 [AList 光鸭驱动](https://github.com/AlistGo/alist/tree/fb0731a6953012e7b72b89bf5473817caa4625f9/drivers/guangyapan)（固定参考提交 `fb0731a6953012e7b72b89bf5473817caa4625f9`）。本包使用标准库独立实现请求、类型、校验及测试，不依赖 AList 或其内部框架。
 
-| 项目 | OpenAPI（根包） | WebAPI（本包） |
+| 项目 | OpenAPI（`openapi` 包） | WebAPI（本包） |
 | --- | --- | --- |
-| 导入路径 | `github.com/shensongpeng/guangyapan-go` | `github.com/shensongpeng/guangyapan-go/webapi` |
+| 导入路径 | `github.com/shensongpeng/guangyapan-go/openapi` | `github.com/shensongpeng/guangyapan-go/webapi` |
 | 业务域名 | `openapi.guangyapan.com` | `api.guangyapan.com` |
 | 账号域名 | `openapi-account.guangyapan.com` | `account.guangyapan.com` |
 | 应用标识 | 平台登记的开放平台 client_id | Web 客户端标识，默认采用 AList 的公开值 |

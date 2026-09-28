@@ -1,4 +1,4 @@
-package guangyapan
+package openapi
 
 // Ptr helps specify optional numeric filters, including explicit zero values.
 func Ptr[T any](value T) *T { return &value }

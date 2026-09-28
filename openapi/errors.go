@@ -1,4 +1,4 @@
-package guangyapan
+package openapi
 
 import (
 	"errors"

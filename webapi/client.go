@@ -1,5 +1,5 @@
 // Package webapi implements Guangyapan's consumer WebAPI independently of
-// the OpenAPI client in the module root. Credentials are not interchangeable.
+// the client in the openapi subpackage. Credentials are not interchangeable.
 package webapi
 
 import (

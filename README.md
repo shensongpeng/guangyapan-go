@@ -1,6 +1,6 @@
 # 光鸭云盘 Go SDK：OpenAPI + WebAPI
 
-本 SDK 包含两套独立协议：根包 `guangyapan` 实现官方 **OpenAPI**；子包 [`webapi`](webapi/README.md) 参考 AList 实现消费端 **WebAPI**，具有独立域名、认证和请求类型。WebAPI Token 不能用作开放平台 OAuth Token；两者不能只通过换域名互相替代。
+本 SDK 包含两套独立协议：子包 [`openapi`](openapi) 实现官方 **OpenAPI**；子包 [`webapi`](webapi/README.md) 参考 AList 实现消费端 **WebAPI**，具有独立域名、认证和请求类型。WebAPI Token 不能用作开放平台 OAuth Token；两者不能只通过换域名互相替代。
 
 以下章节介绍 OpenAPI；WebAPI 的初始化、短信登录、文件及离线任务用法见 [WebAPI 文档](webapi/README.md)。
 
@@ -11,10 +11,13 @@
 ## 安装
 
 ```sh
-go get github.com/shensongpeng/guangyapan-go
+go get github.com/shensongpeng/guangyapan-go/openapi
+go get github.com/shensongpeng/guangyapan-go/webapi
 ```
 
-导入路径为 `github.com/shensongpeng/guangyapan-go`，包名为 `guangyapan`。
+OpenAPI 导入路径为 `github.com/shensongpeng/guangyapan-go/openapi`，包名为 `openapi`；WebAPI 导入路径为 `github.com/shensongpeng/guangyapan-go/webapi`，包名为 `webapi`。
+
+迁移已有代码时，将原根包导入路径追加 `/openapi`，并把 `guangyapan.NewClient` 等包限定符改为 `openapi.NewClient`。根目录不再提供 Go 包，模块路径保持不变。
 
 ```go
 package main
@@ -26,11 +29,11 @@ import (
     "os"
     "time"
 
-    "github.com/shensongpeng/guangyapan-go"
+    "github.com/shensongpeng/guangyapan-go/openapi"
 )
 
 func main() {
-    client, err := guangyapan.NewClient(guangyapan.Config{
+    client, err := openapi.NewClient(openapi.Config{
         ClientID:    os.Getenv("GUANGYAPAN_CLIENT_ID"),
         AccessToken: os.Getenv("GUANGYAPAN_ACCESS_TOKEN"),
     })
@@ -38,10 +41,10 @@ func main() {
 
     ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
     defer cancel()
-    result, err := client.GetFileList(ctx, guangyapan.FileListRequest{
+    result, err := client.GetFileList(ctx, openapi.FileListRequest{
         Page: 0, PageSize: 20,
-        OrderBy: guangyapan.Ptr(guangyapan.OrderByUpdatedAt),
-        SortType: guangyapan.Ptr(guangyapan.SortDescending),
+        OrderBy: openapi.Ptr(openapi.OrderByUpdatedAt),
+        SortType: openapi.Ptr(openapi.SortDescending),
     })
     if err != nil { log.Fatal(err) }
     for _, file := range result.Data.List {
@@ -59,12 +62,12 @@ func main() {
 仅获取设备码需要 `sign_secret`，须在可信应用服务器执行；该服务器出口 IP 需要由平台加入白名单。SDK 不在 Client 中保存此密钥。
 
 ```go
-device := guangyapan.DeviceContext{DeviceID: "device-id", ProjectID: "project-id"}
+device := openapi.DeviceContext{DeviceID: "device-id", ProjectID: "project-id"}
 // 以下调用只在可信应用服务器执行，signSecret 来自安全配置。
 code, err := client.RequestDeviceCode(ctx, device, signSecret, "")
 if err != nil { return err }
 // 将 code.VerificationURIComplete 展示给用户，或作为二维码内容。
-// 移动端 Scheme 可由 guangyapan.DeviceAppURL(code.VerificationURIComplete) 生成。
+// 移动端 Scheme 可由 openapi.DeviceAppURL(code.VerificationURIComplete) 生成。
 ```
 
 接入方拿到设备码后，直接访问账号接口获取 Token：
@@ -78,14 +81,14 @@ client.SetAccessToken(token.AccessToken)
 
 `WaitDeviceToken` 每次请求前等待服务端返回的 `interval`，并在设备码到期、调用方取消、授权成功或其他错误时停止。`RequestDeviceCode` 自动记录 `code.ExpiresAt`。该字段不进入 JSON；跨进程传递设备码时，应通过应用自己的数据结构保留并恢复原始到期时刻，不能反序列化后重新起算有效期。
 
-也可使用单次调用 `PollDeviceToken(ctx, device, deviceCode)` 自行管理轮询；使用 `errors.Is(err, guangyapan.ErrAuthorizationPending)` 判断纯文本 `authorization_pending`。SDK 同时兼容 OAuth JSON 形式的 pending。
+也可使用单次调用 `PollDeviceToken(ctx, device, deviceCode)` 自行管理轮询；使用 `errors.Is(err, openapi.ErrAuthorizationPending)` 判断纯文本 `authorization_pending`。SDK 同时兼容 OAuth JSON 形式的 pending。
 
 ### Web OAuth + PKCE
 
 ```go
-pkce, err := guangyapan.GeneratePKCE()
+pkce, err := openapi.GeneratePKCE()
 if err != nil { return err }
-state, err := guangyapan.GenerateState()
+state, err := openapi.GenerateState()
 if err != nil { return err }
 authorizeURL, err := client.AuthorizationURL(redirectURI, state, pkce.Challenge)
 if err != nil { return err }
@@ -93,7 +96,7 @@ if err != nil { return err }
 // 引导浏览器打开 authorizeURL。
 
 // 回调时先校验会话中的 state，处理用户拒绝授权的错误，再换 Token。
-code, err := guangyapan.ParseOAuthCallback(callbackURL, state)
+code, err := openapi.ParseOAuthCallback(callbackURL, state)
 if err != nil { return err }
 token, err := client.ExchangeCode(ctx, code, pkce.Verifier, redirectURI)
 if err != nil { return err }
@@ -158,14 +161,14 @@ Token 方法不会隐式修改 Client。调用方负责安全保存凭据、刷�
 ## 错误与请求配置
 
 ```go
-if guangyapan.IsCode(err, guangyapan.CodeInvalidToken) {
+if openapi.IsCode(err, openapi.CodeInvalidToken) {
     // 刷新 Token，然后显式重试。
 }
-var apiErr *guangyapan.APIError
+var apiErr *openapi.APIError
 if errors.As(err, &apiErr) {
     // apiErr.Code / apiErr.Message
 }
-var httpErr *guangyapan.HTTPError
+var httpErr *openapi.HTTPError
 if errors.As(err, &httpErr) {
     // httpErr.StatusCode / httpErr.RetryAfter
 }
